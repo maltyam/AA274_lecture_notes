@@ -1,4 +1,4 @@
-% make sure to look for  missing equations in the document
+﻿% make sure to look for  missing equations in the document
 \documentclass[twoside]{article}
 
 \usepackage[math]{kurier}
@@ -324,12 +324,16 @@ There are situations were it is, in fact, optimal to replace stochastic quantiti
 For example, if dynamics are linear,noise is guassian, and cost is quadratic is it optimal to replace stochastic quantaties with their expected values.
 
 \section{Cost to Go Approximation (CGA)}
-Truncate time horizon and approximate cost-to-go \\
-The process involves truncation of a recursive process $$\min_{u_k \in U_k(X_k)}E(g_k(x_k,u_k,w_k) + \bar{J}_{k+1}(f_k(x_k,u_k,w_k)))$$$$
-J_N =g_N$$
-$$$$
-$\bar{J}_{k+1}$ in the above equation is an approximation of the true value.
-$$\bar{J}_{k+1} = \min_{u_{k+1} \in U_{k+1}(X_{k+1})}E(g_{k+1}(x_{k+1},u_{k+1},w_{k+1}) + \bar{J}_{k+2}(f_{k+1}{k+1}))$$
+The general idea of cost-to-go approximation is to compute the control input that minimizes the current and expected future cost looking some finite number of time steps ahead. For example, the one step look ahead optimization policy tries to minimize the function:
+\begin{align}
+    \min_{u_k \in U_k(X_k)}&E(g_k(x_k,u_k,w_k) + \Tilde{J}_{k+1}(f_k(x_k,u_k,w_k))) \\
+    \Tilde{J}_N &=g_N \\
+    \Tilde{J}_{k+1} &\approx J_{k+1}
+\end{align}
+
+$\Tilde{J}_{k+1}$ in the above equation is an approximation of the true cost that is computed in one of several ways discussed below.
+
+
 \\ \subsection{CGA - Computational Aspects}
 
 Some key points
@@ -337,31 +341,32 @@ Some key points
     \item Assuming $\~J_{k+1}$ is available and minimization isn't difficult, this approach can be implemented on- line, and
     \item Determining an appropriate $\~J_{k+1}$ is highly critical to the output of the approximation
     \begin{itemize}
-        \item using a simplified surrogate model would allow for a problem approximation
-        \item using a parametric formulation to compute CGA with a set of tuneable parameters
-        \item using a rollout approach allows for the use of a suboptimal policy to compute $\~J_{k+1}$
+        \item A simplified surrogate model allows for problem approximation
+        \item A parametric formulation computes CGA with a set of tuneable parameters
+        \item A rollout approach uses a suboptimal policy to compute $\Tilde{J}_{k+1}$
     \end{itemize}
 \end{itemize}
-\\ \subsection{Problem Approximation}
-This approach affords us many problem-dependent possibilities. We can,
+\subsection{Problem Approximation}
+Problem approximation allows you to simplify the full system you are trying to solve in order to make an approximate cost simpler to compute. This approach affords us many problem-dependent possibilities. We can,
 \begin{itemize}
     \item assume using nominal values in place of uncertainty quantities is sufficiently accurate
     \item create a surrogate model of the problem by ignoring some constraints
     \item assume that subsystem decoupling is non-influential and treat the subsystems independently
     \item use lower resolution solutions of the system by aggregating states together
 \end{itemize}
-\\ \subsection{Parametric Approximation}
-This approach allows for the computation of the CGA based on a parameterization of \textit{J}˜ \textit{x},\textit{r} where x is the current state and \textit{r }= (\textit{r}\textsubscript{1}, ..., \textit{r\textsubscript{m}}) is a vector of weights that can be tuned \\
+
+\subsection{Parametric Approximation}
+This approach allows for the computation of the CGA based on a parameterization of $\Tilde{J}(x,r)$ where $x$ is the current state and \textit{r }= (\textit{r}\textsubscript{1}, ..., \textit{r\textsubscript{m}}) is a vector of weights that can be tuned \\
 \begin{itemize}
-    \item it is inherently subjective, because we choose the parameterization
+    \item it is inherently subjective, because we choose the particular parameterization
     \begin{itemize}
         \item for example: (feature extraction)
-        $$\~J_{x,r} = \sum^m_{i=1}r_i*y_i(x)$$
-        \item Where, $y'_is$ are feature vectors and $\~J_{x.r}$ is a generic complex function of the state space.
+        $$\~J_{x,r} = \sum^m_{i=1}r_i y_i(x)$$
+        \item Where, $y_i$'s are feature vectors and $\Tilde{J}(x.r)$ is a generic complex function of the state space.
     \end{itemize}
 \end{itemize}
 
-\\ \subsection{Rollout}
+\subsection{Rollout}
 The cost to go is the optimal cost you would incur if you start at time t+1 at state $x_k +1$ and run an optimal policy from there on.\\
 Let's assume you know a policy that isn't optimal, but its decent.  You could approximate the cost by:
 \begin{itemize}
@@ -370,8 +375,8 @@ Let's assume you know a policy that isn't optimal, but its decent.  You could ap
     \item pin multiple trajectories
     \item average the cost
 \end{itemize}
-The take away for this approach is the assumption of some heuristic policy referred to as the $"$ base policy$"$  Implementation of the rollout control approach requires a function definition $ \forall $ \textit{u\textsubscript{k}} $$
-\textit{Q\textsubscript{k}}(\textit{x\textsubscript{k}}, \textit{u\textsubscript{k}}) := E  \{  \textit{g\textsubscript{k}}(\textit{x\textsubscript{k}}, \textit{u\textsubscript{k}}, \textit{w\textsubscript{k}}) + \textit{H\textsubscript{k}}\textsubscript{+1}(\textit{x\textsubscript{k}}, \textit{u\textsubscript{k}}, \textit{w\textsubscript{k}}) \}$$ where \textit{H\textsubscript{k+1} is the $"$ cost-to-go$"$  value of the base policy and Qk-factors can be}
+The take away for this approach is the assumption of some heuristic policy referred to as the $"$ base policy$"$.  Implementation of the rollout control approach requires a function definition $ \forall $ \textit{u\textsubscript{k}} $$
+\textit{Q\textsubscript{k}}(\textit{x\textsubscript{k}}, \textit{u\textsubscript{k}}) := E  \{  \textit{g\textsubscript{k}}(\textit{x\textsubscript{k}}, \textit{u\textsubscript{k}}, \textit{w\textsubscript{k}}) + \textit{H\textsubscript{k}}\textsubscript{+1}(\textit{x\textsubscript{k}}, \textit{u\textsubscript{k}}, \textit{w\textsubscript{k}}) \}$$ where $H_{k+1}$ is the $"$cost-to-go$"$  value of the base policy and $Q_k$-factors can be:
 \begin{itemize}
     \item estimated via Monte Carlo
     \item approximated through a CEC approach
